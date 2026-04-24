@@ -1,83 +1,250 @@
-Smart Campus Sensor & Room Management API 
+# 🏫 Smart Campus — Sensor & Room Management API
 
-Overview 
+A JAX-RS (Jersey 2) RESTful API for managing university campus rooms and IoT sensors. Built for the 5COSC022W Client-Server Architectures coursework (University of Westminster, 2025/26).
 
-This project develops a RESTful API for the university’s ‘Smart Campus’ project via JAX-RS (Jersey). It is meant for facilities managers and automated systems to add, remove, edit Rooms, Sensors and Sensor Readings throughout the buildings on campus. 
+---
 
-The API adheres to REST principles, employs JSON for data transmission, and implements thorough error handling with relevant HTTP status codes. As specified in the coursework specification, all data is stored in-memory using HashMap and ArrayList facilities. 
+## 📐 API Design Overview
 
-Technologies Used 
+The API follows RESTful architectural principles with a clear, hierarchical resource model that mirrors the physical structure of the campus:
 
-Technology | Function Java 8 | Core programming language JAX-RS (Jersey 2.39) | RESTful web service framework Maven | Build automation and dependency management Apache Tomcat | Servlet container/deployment target JSON | Interchange data format Postman / cURL | API test tools 
+```
+/api/v1                          ← Discovery / metadata endpoint
+/api/v1/rooms                    ← Room collection resource
+/api/v1/rooms/{roomId}           ← Individual room resource
+/api/v1/sensors                  ← Sensor collection resource
+/api/v1/sensors/{sensorId}       ← Individual sensor resource
+/api/v1/sensors/{sensorId}/readings  ← Sub-resource: reading history
+```
 
-Project Structure 
+### Technology Stack
 
-src/main/java/com/mycompany/mavenproject1/ ├── JAXRSConfiguration.java # Application path configuration (/api/v1) ├── model/ │ ├── Room.java │ ├── Sensor.java │ ├── SensorReading.java │ └── ErrorResponse.java └ Repository/ │ └── DataStore.java # In-memory data storage (HashMaps) ├── resources/ │ ├── DiscoveryResource.java # Root discovery endpoint │ ├── RoomResource.java │ └── SensorResource.java │ └── SensorReadingResource.java ├── exception/ │ ├── RoomNotEmptyException.java │ ├── LinkedResourceNotFoundException.java │ └── SensorUnavailableException.java └── mapper/ # Moved to proper package ├── GlobalExceptionMapper.java RoomNotEmptyExceptionMapper.java ├── LinkedResourceNotFoundExceptionMapper.java └── SensorUnavailableExceptionMapper.java 
+| Component        | Technology                        |
+|------------------|-----------------------------------|
+| Language         | Java 8                            |
+| API Framework    | JAX-RS via Jersey 2.39.1          |
+| JSON Binding     | Jackson (via jersey-media-json-jackson) |
+| Build Tool       | Apache Maven                      |
+| Server           | Apache Tomcat (or any Servlet 3.x container) |
+| Data Storage     | In-memory (`HashMap`, `ArrayList`) |
 
-How to Build and Run the Project 
+### Key Design Decisions
 
-Prerequisites 
+- **Versioned entry point**: All routes are prefixed with `/api/v1` via `@ApplicationPath("/api/v1")`.
+- **In-memory data store**: A static `DataStore` class holds `HashMap<String, Room>`, `HashMap<String, Sensor>`, and `HashMap<String, List<SensorReading>>`, pre-seeded with one room and one sensor.
+- **Sub-Resource Locator**: `SensorResource` delegates `/sensors/{id}/readings` to a dedicated `SensorReadingResource` class, keeping concerns separated.
+- **Leak-proof error handling**: Every exception scenario is caught by a specific `ExceptionMapper` and returns a structured JSON body. A global catch-all `ExceptionMapper<Throwable>` ensures raw stack traces are never exposed.
+- **Cross-cutting observability**: A `LoggingFilter` implementing both `ContainerRequestFilter` and `ContainerResponseFilter` logs every incoming request method/URI and every outgoing status code.
 
-Java JDK 8 or above Apache Maven 3.6+ Apache Tomcat 9+ (or any servlet container) 
+---
 
-Steps 
+## 🚀 Build & Run Instructions
 
-1. Clone the repository bash git clone https://github.com/your-username/your-repo-name.git “cd your-repo-name” ” Use Maven to build the project 
+### Prerequisites
 
-bash
- mvn clean package This should produce a WAR file in the target/ directory (for example, mavenproject1-1.0-SNAPSHOT.war). 
+- **Java JDK 8** or higher  
+- **Apache Maven 3.6+**  
+- **Apache Tomcat 9.x** (or any Servlet 3.1-compatible container)
 
-Deploy to Tomcat Deploy to Tomcat Copy WAR File to Tomcat’s webapps/ folder. 
+Verify your environment:
+```bash
+java -version
+mvn -version
+```
 
-Start Tomcat using bin/startup.sh (Linux/Mac) or bin/startup.bat (Windows). 
+### Step 1 — Clone the Repository
 
-Get API Access Base URL: http://localhost:8080/mavenproject1/api/v1 
+```bash
+git clone https://github.com/<your-username>/smart-campus-api.git
+cd smart-campus-api/mavenproject1
+```
 
-Test discovery endpoint: http://localhost:8080/mavenproject1/api/v1 
+### Step 2 — Build the WAR File
 
-API Endpoints 
+```bash
+mvn clean package
+```
 
-Discovery Method | Endpoint | Description GET | /api/v1 | Returns API information and resources. 
+On success you will see:
+```
+BUILD SUCCESS
+```
+The compiled WAR is at:
+```
+target/mavenproject1-1.0-SNAPSHOT.war
+```
 
-Rooms Method | Endpoint | Description GET | /api/v1/rooms | Retrieve all rooms POST | /api/v1/rooms | Create a room GET | /api/v1/rooms/{roomId} | Get a specific room by ID DELETE | /api/v1/rooms/{roomId} | Delete a room (requires that the room does not have sensors) 
+### Step 3 — Deploy to Tomcat
 
-SENSORS Method | Endpoint | Description GET | /api/v1/sensors | Retrieve all sensors GET | /api/v1/sensors?type={type} | Get sensors based on the sensor type (e.g. Temperature). POST | /api/v1/sensors | Create a sensor (valid roomId required). GET | /api/v1/sensors/{sensorId} 
+**Option A — Copy the WAR manually:**
+```bash
+cp target/mavenproject1-1.0-SNAPSHOT.war $CATALINA_HOME/webapps/smart-campus.war
+$CATALINA_HOME/bin/startup.sh
+```
 
-Sensor Readings (Sub Resource) Method | Endpoint | Description GET | /api/v1/sensors/{sensorId}/readings | Retrieve all readings for a sensor POST | /api/v1/sensors/{sensorId}/readings | Add a new reading (sets currentValue) 
+**Option B — Deploy via Tomcat Manager UI:**
+1. Open `http://localhost:8080/manager/html`
+2. Under *"WAR file to deploy"*, browse to the WAR file and click *Deploy*.
 
-Sample cURL Commands 
+**Option C — Use Apache NetBeans:**  
+Open the project in NetBeans, right-click the project → *Clean and Build*, then *Run*.
 
-Note: If you use different hosts/ports, be sure to replace localhost:8080 accordingly. 
+### Step 4 — Verify the Server is Running
 
-Discovery Endpoint 1. Discovery Endpoint  ”Discovery” Endpoint1. curl -X GET http://localhost:8080/mavenproject1/api/v1 1. Discovery Endpoint curl -X GET http://localhost:8080/mavenproject1/api/v1 
+```bash
+curl http://localhost:8080/smart-campus/api/v1
+```
 
-2. Create Room 2. Create a Room ```bash 2. Create a Room ”curl –X POST http://localhost:8080/mavenproject1/api/v1/rooms \ -H "Content-Type: application/json" ‘-d’ ‘{“id”: “LAB-101”, “name”: “Computer Lab”, “capacity”: 30}’ ” 
+Expected response:
+```json
+{
+  "version": "v1",
+  "adminContact": "admin@smartcampus.local",
+  "resources": {
+    "rooms": "/api/v1/rooms",
+    "sensors": "/api/v1/sensors"
+  }
+}
+```
 
-3. Set Up a Sensor 3. Create a Sensor
-”bash_curl -X POST http://localhost:8080/mavenproject1/api/v1/sensors \ -H “Content-Type: application/json” \ -d ‘{“id”:”TEMP-001″,”type”:”Temperature”,”status”:”ACTIVE”,”currentValue”:22.5,”roomId”:”LAB-101″}’ ” 
+> **Note:** Replace `smart-campus` with whatever context path Tomcat assigned to your WAR (e.g., `mavenproject1-1.0-SNAPSHOT`).
 
-4. Sensors by Type 4. Filter Sensors by Type curl -X GET “http://localhost:8080/mavenproject1/api/v1/sensors?type=Temperature” 5. Filter Sensors by Type curl -X GET "http://localhost:8080/mavenproject1/api/v1/sensors?type=Temperature"
- 
+---
 
-5. Add a Sensor Reading 5. Add Sensor Reading ```bash curl -X POST http://localhost:8080/mavenproject1/api/v1/sensors/TEMP-001/readings \ -H “Content-Type: application/json” \ -d ‘{“value”:23.8}’ ” 
+## 🧪 Sample `curl` Commands
 
-6. Delete Room with Sensors (409 Conflict) 
- curl -X DELETE http://localhost:8080/mavenproject1/api/v1/rooms/LAB-101 “ 
+All examples assume the server is running at `http://localhost:8080/smart-campus`.
 
-7. Add a Reading to a Sensor with the MAINTENANCE State (403 Forbidden) 7. Try to Add a Reading to a Sensor in MAINTENANCE (403 Forbidden Expected) # First, update sensor status (it’s not endpoint, but you can do it via code or just imagine). curl -X POST http://localhost:8080/mavenproject1/api/v1/sensors/TEMP-001/readings \ -H “Content-Type: application/json” \ -d ‘{“value”:24.0}’ 7. Try to add a reading to a sensor in MAINTENANCE (403 Forbidden) 
+### 1. Discovery — Get API Metadata
+```bash
+curl -X GET http://localhost:8080/smart-campus/api/v1 \
+  -H "Accept: application/json"
+```
 
-Error Handling 
+### 2. Create a New Room (POST)
+```bash
+curl -X POST http://localhost:8080/smart-campus/api/v1/rooms \
+  -H "Content-Type: application/json" \
+  -d '{"id":"ENG-101","name":"Engineering Lab","capacity":30}'
+```
+Expected: `201 Created` with `Location: /api/v1/rooms/ENG-101`
 
-The API returns structured JSON error responses through custom exceptions and Exception Mappers. 
+### 3. Retrieve All Rooms (GET)
+```bash
+curl -X GET http://localhost:8080/smart-campus/api/v1/rooms \
+  -H "Accept: application/json"
+```
 
-Scenario | Exception Class | HTTP Status Deleting a Room With Sensors Still Attached to It | RoomNotEmptyException | 409 Conflict Creation of a sensor linked to a non-existing roomId | LinkedResourceNotFoundException | 422 Unprocessable Entity Posting a reading to a sensor in MAINTENANCE | SensorUnavailableException | 403 Forbidden Any uncaught runtime exception | GlobalExceptionMapper (catch-all) | 500 Internal Server Error 
+### 4. Retrieve a Specific Room by ID (GET)
+```bash
+curl -X GET http://localhost:8080/smart-campus/api/v1/rooms/LIB-301 \
+  -H "Accept: application/json"
+```
 
-Example Error Response (409 Conflict) 
+### 5. Register a New Sensor (POST) — Valid Room
+```bash
+curl -X POST http://localhost:8080/smart-campus/api/v1/sensors \
+  -H "Content-Type: application/json" \
+  -d '{"id":"CO2-002","type":"CO2","status":"ACTIVE","currentValue":410.0,"roomId":"LIB-301"}'
+```
+Expected: `201 Created`
 
-” ( 409;  "error": "Conflict", "message": "Cannot delete room because it is still assigned to sensors." } ```
+### 6. Register a Sensor with a Non-Existent Room — Triggers 422
+```bash
+curl -X POST http://localhost:8080/smart-campus/api/v1/sensors \
+  -H "Content-Type: application/json" \
+  -d '{"id":"CO2-003","type":"CO2","status":"ACTIVE","currentValue":400.0,"roomId":"INVALID-999"}'
+```
+Expected: `422 Unprocessable Entity` with JSON error body
+
+### 7. Filter Sensors by Type (GET with Query Param)
+```bash
+curl -X GET "http://localhost:8080/smart-campus/api/v1/sensors?type=Temperature" \
+  -H "Accept: application/json"
+```
+
+### 8. Post a Sensor Reading (POST sub-resource)
+```bash
+curl -X POST http://localhost:8080/smart-campus/api/v1/sensors/TEMP-001/readings \
+  -H "Content-Type: application/json" \
+  -d '{"value":23.7}'
+```
+Expected: `201 Created` — also updates `currentValue` on the parent sensor
+
+### 9. Get Reading History for a Sensor (GET sub-resource)
+```bash
+curl -X GET http://localhost:8080/smart-campus/api/v1/sensors/TEMP-001/readings \
+  -H "Accept: application/json"
+```
+
+### 10. Attempt to Delete a Room That Still Has Sensors — Triggers 409
+```bash
+curl -X DELETE http://localhost:8080/smart-campus/api/v1/rooms/LIB-301
+```
+Expected: `409 Conflict` with JSON error body
+
+### 11. Delete an Empty Room (DELETE)
+```bash
+# First create a room with no sensors
+curl -X POST http://localhost:8080/smart-campus/api/v1/rooms \
+  -H "Content-Type: application/json" \
+  -d '{"id":"TEMP-ROOM","name":"Empty Room","capacity":5}'
+
+# Now delete it
+curl -X DELETE http://localhost:8080/smart-campus/api/v1/rooms/TEMP-ROOM
+```
+Expected: `200 OK`
+
+### 12. Post a Reading to a Sensor in MAINTENANCE — Triggers 403
+```bash
+# First update sensor status to MAINTENANCE (set manually in DataStore for demo, or POST a new sensor)
+curl -X POST http://localhost:8080/smart-campus/api/v1/sensors \
+  -H "Content-Type: application/json" \
+  -d '{"id":"CO2-MAINT","type":"CO2","status":"MAINTENANCE","currentValue":0.0,"roomId":"LIB-301"}'
+
+curl -X POST http://localhost:8080/smart-campus/api/v1/sensors/CO2-MAINT/readings \
+  -H "Content-Type: application/json" \
+  -d '{"value":500.0}'
+```
+Expected: `403 Forbidden` with JSON error body
+
+---
+
+## 📁 Project Structure
+
+```
+mavenproject1/
+├── pom.xml
+└── src/main/java/com/mycompany/mavenproject1/
+    ├── JAXRSConfiguration.java          # @ApplicationPath("/api/v1")
+    ├── exception/
+    │   ├── LinkedResourceNotFoundException.java
+    │   ├── RoomNotEmptyException.java
+    │   └── SensorUnavailableException.java
+    ├── filter/
+    │   └── LoggingFilter.java           # Request/Response logging
+    ├── mapper/
+    │   ├── GlobalExceptionMapper.java   # Catch-all → 500
+    │   ├── LinkedResourceNotFoundExceptionMapper.java  # 422
+    │   ├── RoomNotEmptyExceptionMapper.java            # 409
+    │   └── SensorUnavailableExceptionMapper.java       # 403
+    ├── model/
+    │   ├── ErrorResponse.java
+    │   ├── Room.java
+    │   ├── Sensor.java
+    │   └── SensorReading.java
+    ├── repository/
+    │   └── DataStore.java               # Static in-memory store
+    └── resources/
+        ├── DiscoveryResource.java       # GET /api/v1
+        ├── RoomResource.java            # /api/v1/rooms
+        ├── SensorResource.java          # /api/v1/sensors
+        └── SensorReadingResource.java   # /api/v1/sensors/{id}/readings
+```
 "
+---
 ## REPORT
-
+---
 5COSC022W_ Client-Server
 Architectures
 Smart Campus API
