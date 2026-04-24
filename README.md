@@ -84,9 +84,10 @@ Smart Campus API
 Shenan Dimbukkuwalage
 20241042
 W2121287
+
+
 Part 1: Service Architecture & Setup
-Q1. Explain the default lifecycle of a JAX-RS Resource class. Is a new instance
-instantiated for every incoming request, or does the runtime treat it as a singleton?
+Q1. Explain the default lifecycle of a JAX-RS Resource class. Is a new instance instantiated for every incoming request, or does the runtime treat it as a singleton?
 
 Elaborate on how this architectural decision impacts the way you manage and synchronize your in-memory data structures. When a resource class handles an incoming HTTP request, JAX-RS creates a new instance of the class for every single request (the request-scoped lifecycle). This means
 a separate instance of RoomResource or SensorResource will be created for every request received. In our case, although there are multiple instances of the resource, they share the same underlying data structure (static HashMap) in the DataStore class since they are all referencing the same static field. Static fields belong to a class and not to the objects of that class; therefore, the data stored in the static field will persist between requests.
