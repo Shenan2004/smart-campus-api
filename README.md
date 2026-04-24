@@ -24,7 +24,7 @@ Steps
 
 1. Clone the repository ```bash git clone https://github.com/your-username/your-repo-name.git “cd your-repo-name” ” Use Maven to build the project 
 
-```bash
+bash
  mvn clean package ``` This should produce a WAR file in the target/ directory (for example, mavenproject1-1.0-SNAPSHOT.war). 
 
 Deploy to Tomcat Deploy to Tomcat Copy WAR File to Tomcat’s webapps/ folder. 
@@ -49,7 +49,7 @@ Sample cURL Commands
 
 Note: If you use different hosts/ports, be sure to replace localhost:8080 accordingly. 
 
-Discovery Endpoint 1. Discovery Endpoint ```bash ”Discovery” Endpoint1. ```bash curl -X GET http://localhost:8080/mavenproject1/api/v1 1. Discovery Endpoint ```bash curl -X GET http://localhost:8080/mavenproject1/api/v1 ``` 
+Discovery Endpoint 1. Discovery Endpoint  ”Discovery” Endpoint1. ```bash curl -X GET http://localhost:8080/mavenproject1/api/v1 1. Discovery Endpoint ```bash curl -X GET http://localhost:8080/mavenproject1/api/v1 ``` 
 
 2. Create Room 2. Create a Room ```bash 2. Create a Room ”curl –X POST http://localhost:8080/mavenproject1/api/v1/rooms \ -H "Content-Type: application/json" ‘-d’ ‘{“id”: “LAB-101”, “name”: “Computer Lab”, “capacity”: 30}’ ” 
 
@@ -74,7 +74,7 @@ Scenario | Exception Class | HTTP Status Deleting a Room With Sensors Still Atta
 
 Example Error Response (409 Conflict) 
 
-” ( 409;  "error": "Conflict", "message": "Cannot delete room because it is still assigned to sensors." } 
+” ( 409;  "error": "Conflict", "message": "Cannot delete room because it is still assigned to sensors." } ```
 "
 ## REPORT
 
